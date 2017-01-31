@@ -384,6 +384,8 @@ void hotSetConvertFlags(hotCtx g, unsigned long hotConvFlags); // set flags befo
 
 char *hotReadFont(hotCtx g, int flags, int *psinfo, hotReadFontOverrides *fontOverride );
 
+char *hotReadCFFData(hotCtx g, int *psinfo);
+
 /* hotReadFont() is called to read the PostScript outline font. The flags
    argument debugging and font processing: */
 

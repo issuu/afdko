@@ -340,8 +340,8 @@ static char *cbRefill(void *ctx, long *count) {
 	return g->cb.cffRefill(g->cb.ctx, count);
 }
 
-/* Convert PostScript font to CFF and read result */
-char *hotReadFont(hotCtx g, int flags, int *psinfo,  hotReadFontOverrides *fontOverride) {
+char* hotReadCFFData(hotCtx g, int *psinfo) {
+	/* Parse CFF data and get global font information */
 	static cffStdCallbacks cb = {
 		NULL,
 		cbFatal,
@@ -351,68 +351,11 @@ char *hotReadFont(hotCtx g, int flags, int *psinfo,  hotReadFontOverrides *fontO
 		cbSeek,
 		cbRefill
 	};
-	cffFontInfo *fi;
-	int gid;
-	long tcflags;
 
-	/* Copy conversion flags */
-	g->font.flags = 0;
-#if HOT_DEBUG
-	g->font.debug = flags & HOT_DB_MASK;
-#endif /* HOT_DEBUG	*/
-
-	/* Convert to CFF */
-	tcflags = 0;
-	tcflags |= TC_DO_WARNINGS;
-	if (flags & HOT_ADD_AUTH_AREA) {
-		tcflags |= TC_ADDAUTHAREA;
-	}
-	if (flags & HOT_SUBRIZE) {
-		tcflags |= TC_SUBRIZE;
-	}
-	if (flags & HOT_ADD_EURO) {
-		tcflags |= TC_ADDEURO;
-	}
-	if (flags & HOT_IS_SERIF) {
-		tcflags |= TC_IS_SERIF;
-	}
-	if (flags & HOT_IS_SANSSERIF) {
-		tcflags |= TC_IS_SANSSERIF;
-	}
-	if (flags & HOT_SUPRESS_HINT_WARNINGS) {
-		tcflags |= TC_SUPPRESS_HINT_WARNINGS;
-	}
-	if (flags & HOT_SUPRESS__WIDTH_OPT) {
-		tcflags |= TC_SUPPRESS_WIDTH_OPT;
-	}
-    
-	if (flags & HOT_NO_OLD_OPS) {
-		tcflags |= TC_NOOLDOPS;
-	}
-	if (flags & HOT_FORCE_NOTDEF) {
-		tcflags |= TC_FORCE_NOTDEF;
-	}
-	if (flags & HOT_RENAME) {
-		tcflags |= TC_RENAME; /* turn on  renaming in typecomp */
-	}
-	else {
-		g->cb.getFinalGlyphName = NULL; /* supresses renaming in feature file */
-	}
-	if (flags & HOT_SUBSET) {
-		tcflags |= TC_SUBSET; /* turn on subsetting to GOADB list  in typecomp */
-	}
-	tcSetMaxNumSubrsOverride(g->ctx.tc,  fontOverride->maxNumSubrs);
-	tcSetWeightOverride(g->ctx.tc,  fontOverride->syntheticWeight);
-	tcCompactFont(g->ctx.tc, tcflags);
-
-	if (g->cb.tmpClose) {
-          g->cb.tmpClose(g->cb.ctx); /* temporary hack to write out tmp cff file. */
-        }
-
-	/* Parse CFF data and get global font information */
 	cb.ctx = g;
 	g->ctx.cff = cffNew(&cb, 0);
-	fi = cffGetFontInfo(g->ctx.cff);
+
+        cffFontInfo *fi = cffGetFontInfo(g->ctx.cff);
 
 	/* Create and copy FontName */
 	COPY(dnaGROW(g->font.FontName, fi->FontName.length),
@@ -472,7 +415,7 @@ char *hotReadFont(hotCtx g, int flags, int *psinfo,  hotReadFontOverrides *fontO
 
 	/* Get and copy glyph information (at dflt instance for MMs) */
 	dnaSET_CNT(g->font.glyphs, fi->nGlyphs);
-	for (gid = 0; gid < fi->nGlyphs; gid++) {
+	for (int gid = 0; gid < fi->nGlyphs; gid++) {
 		cffGlyphInfo *cffgi = cffGetGlyphInfo(g->ctx.cff, gid, NULL);
 		hotGlyphInfo *hotgi = &g->font.glyphs.array[gid];
 
@@ -494,6 +437,69 @@ char *hotReadFont(hotCtx g, int flags, int *psinfo,  hotReadFontOverrides *fontO
 	}
 
 	return g->font.FontName.array;
+
+
+}
+
+/* Convert PostScript font to CFF and read result */
+char *hotReadFont(hotCtx g, int flags, int *psinfo,  hotReadFontOverrides *fontOverride) {
+	long tcflags;
+
+	/* Copy conversion flags */
+	g->font.flags = 0;
+#if HOT_DEBUG
+	g->font.debug = flags & HOT_DB_MASK;
+#endif /* HOT_DEBUG	*/
+
+	/* Convert to CFF */
+	tcflags = 0;
+	tcflags |= TC_DO_WARNINGS;
+	if (flags & HOT_ADD_AUTH_AREA) {
+		tcflags |= TC_ADDAUTHAREA;
+	}
+	if (flags & HOT_SUBRIZE) {
+		tcflags |= TC_SUBRIZE;
+	}
+	if (flags & HOT_ADD_EURO) {
+		tcflags |= TC_ADDEURO;
+	}
+	if (flags & HOT_IS_SERIF) {
+		tcflags |= TC_IS_SERIF;
+	}
+	if (flags & HOT_IS_SANSSERIF) {
+		tcflags |= TC_IS_SANSSERIF;
+	}
+	if (flags & HOT_SUPRESS_HINT_WARNINGS) {
+		tcflags |= TC_SUPPRESS_HINT_WARNINGS;
+	}
+	if (flags & HOT_SUPRESS__WIDTH_OPT) {
+		tcflags |= TC_SUPPRESS_WIDTH_OPT;
+	}
+    
+	if (flags & HOT_NO_OLD_OPS) {
+		tcflags |= TC_NOOLDOPS;
+	}
+	if (flags & HOT_FORCE_NOTDEF) {
+		tcflags |= TC_FORCE_NOTDEF;
+	}
+	if (flags & HOT_RENAME) {
+		tcflags |= TC_RENAME; /* turn on  renaming in typecomp */
+	}
+	else {
+		g->cb.getFinalGlyphName = NULL; /* supresses renaming in feature file */
+	}
+	if (flags & HOT_SUBSET) {
+		tcflags |= TC_SUBSET; /* turn on subsetting to GOADB list  in typecomp */
+	}
+	tcSetMaxNumSubrsOverride(g->ctx.tc,  fontOverride->maxNumSubrs);
+	tcSetWeightOverride(g->ctx.tc,  fontOverride->syntheticWeight);
+	tcCompactFont(g->ctx.tc, tcflags);
+
+	if (g->cb.tmpClose) {
+          g->cb.tmpClose(g->cb.ctx); /* temporary hack to write out tmp cff file. */
+        }
+        //Update fontinfo by reading back cff font data.
+        return hotReadCFFData(g, psinfo);
 }
 
 /* Add glyph's vertical origin y-value to glyph info. (Not an API.) */
