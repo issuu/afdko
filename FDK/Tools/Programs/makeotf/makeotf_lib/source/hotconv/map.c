@@ -699,8 +699,13 @@ static void checkCMapCompatibility(hotCtx g) {
 
 	reg = psGetString(ps, &reglen);
 	Reg = hotGetString(g, g->font.cid.registry, &Reglen);
+
+        //FIXME Some editors think that having their own registry is a fun thing. 
+        // See smoke-test 10.pdf (Which has Registry=PDFTron, Ordering=Identity)
 	if (reglen != Reglen || memcmp(reg, Reg, reglen) != 0) {
-		CMapMsg(h, hotFATAL, "CMap /Registry incompatible with CID font");
+
+ 		fprintf(stderr,"Warning Registry test [%.*s] == [%.*s]\n", reglen, reg, Reglen, Reg);
+		//CMapMsg(h, hotFATAL, "CMap /Registry incompatible with CID font");
 	}
 	if (!psMatchToken(ps, psGetToken(ps), PS_OPERATOR, "def")) {
 		CMapMsg(h, hotFATAL, "expecting def after /Registry value");
