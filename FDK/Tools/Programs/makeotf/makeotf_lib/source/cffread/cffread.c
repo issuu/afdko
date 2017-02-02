@@ -2134,15 +2134,16 @@ static void CIDRead(cffCtx h) {
 		h->dict.fd->FontMatrix = NULL;
 		DICTRead(h, length, offset, 0);
 
-		if (h->dict.Private.length == 0) {
-			fatal(h, "FD missing Private operator");
-		}
-
-		/* Read Private DICT */
+                /* Read Private DICT */
 		h->dict.Subrs = 0;
 		h->dict.defaultWidthX = 0;
 		h->dict.nominalWidthX = 0;
-		DICTRead(h, h->dict.Private.length, h->dict.Private.offset, 0);
+
+		if (h->dict.Private.length == 0) {
+			//fatal(h, "FD missing Private operator");
+		} else {
+                  DICTRead(h, h->dict.Private.length, h->dict.Private.offset, 0);
+                }
 
 		/* Read Subrs index */
 		if (h->dict.Subrs != 0) {

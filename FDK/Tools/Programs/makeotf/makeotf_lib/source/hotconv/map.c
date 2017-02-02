@@ -699,8 +699,15 @@ static void checkCMapCompatibility(hotCtx g) {
 
 	reg = psGetString(ps, &reglen);
 	Reg = hotGetString(g, g->font.cid.registry, &Reglen);
+
+        //Some editors think that having their own registry is a fun thing. 
+        //See smoke-test 10.pdf (Which has Registry=PDFTron, Ordering=Identity)
 	if (reglen != Reglen || memcmp(reg, Reg, reglen) != 0) {
-		CMapMsg(h, hotFATAL, "CMap /Registry incompatible with CID font");
+                const char* fmt = "Warning Registry test (cidcmap): [%.*s] != [%.*s] (font file)\n";
+                char buf[20];
+                snprintf(buf, 20, fmt, reglen, reg, Reglen, Reg);
+                CMapMsg(h, hotWARNING, buf);
+		//CMapMsg(h, hotFATAL, "CMap /Registry incompatible with CID font");
 	}
 	if (!psMatchToken(ps, psGetToken(ps), PS_OPERATOR, "def")) {
 		CMapMsg(h, hotFATAL, "expecting def after /Registry value");
@@ -712,7 +719,8 @@ static void checkCMapCompatibility(hotCtx g) {
 	ord = psGetString(ps, &ordlen);
 	Ord = hotGetString(g, g->font.cid.ordering, &Ordlen);
 	if (ordlen != Ordlen || memcmp(ord, Ord, ordlen) != 0) {
-		CMapMsg(h, hotFATAL, "CMap /Ordering incompatible with CID font");
+ 		fprintf(stderr,"Warning Ordering test out cidcmap: [%.*s] != [%.*s] (font file)\n", ordlen, ord, Ordlen, Ord);
+		//CMapMsg(h, hotFATAL, "CMap /Ordering incompatible with CID font");
 	}
 	if (!psMatchToken(ps, psGetToken(ps), PS_OPERATOR, "def")) {
 		CMapMsg(h, hotFATAL, "expecting def after /Ordering value");
