@@ -700,7 +700,7 @@ static void checkCMapCompatibility(hotCtx g) {
 	reg = psGetString(ps, &reglen);
 	Reg = hotGetString(g, g->font.cid.registry, &Reglen);
 
-        //Some editors think that having their own registry is a fun thing. 
+        //Some editors think that having their own registry is a fun thing.
         //See smoke-test 10.pdf (Which has Registry=PDFTron, Ordering=Identity)
 	if (reglen != Reglen || memcmp(reg, Reg, reglen) != 0) {
                 const char* fmt = "Warning Registry test (cidcmap): [%.*s] != [%.*s] (font file)\n";
@@ -1372,7 +1372,7 @@ void mapAddUVS(hotCtx g, char *uvsName) {
         while (isspace(*p) || (*p == ';')) {
             p++;
         }
- 
+
 		/* Parse glyphTag string */
 		glyphTag   = p2  = p;
 		p = gnameScan(g, glyphTag);
@@ -1456,10 +1456,10 @@ static UnicodeChar *getUVFromAGL(hotCtx g, char *glyphName, int fatalErr) {
    sets *usv to the <CODE> */
 static int checkUniGName(hotCtx g, char *gn, uint32_t *usv) {
 #define IS_HEX(h) (isxdigit(h) && !islower(h))
-	uint32_t code;
-	char *pHexStart;
-	char *p;
-	long numHexDig;
+	uint32_t code = 0;
+	char *pHexStart = NULL;
+	char *p = NULL;
+	long numHexDig = 0;
 	int uniName = 0;
 
 	/* Check for a valid prefix */
@@ -1502,7 +1502,9 @@ static int checkUniGName(hotCtx g, char *gn, uint32_t *usv) {
 	}
 
 	/* Check code */
-	sscanf(pHexStart, "%ux", &code);
+	if (sscanf(pHexStart, "%x", &code) != 1) {
+		return 0;
+    }
 
 #if 0
 	if (IN_RANGE(code, UV_SURR_BEG, UV_SURR_END)) {
